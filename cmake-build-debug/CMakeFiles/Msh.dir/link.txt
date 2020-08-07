@@ -1,0 +1,1 @@
+/usr/bin/cc -g   CMakeFiles/Msh.dir/mshell.c.o  -o Msh 
