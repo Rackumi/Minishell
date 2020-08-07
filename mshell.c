@@ -106,7 +106,7 @@ int main(void) { //funcion main donde se ejecutara tod0 el programa y se escribi
                         }
                     }
                     if (line->redirect_error != NULL) { // >&
-                        fd = creat(line->redirect_output,0666); //creamos el fichero
+                        fd = open(line->redirect_error,0666); //creamos el fichero
                         if(fd!=-1){                                   // permisos del mode 0666: R y W para user group y other
                             dup2(fd,2); //redirigimos el error
                             close(fd); //cerramos el fd
@@ -188,7 +188,7 @@ int main(void) { //funcion main donde se ejecutara tod0 el programa y se escribi
                                 }
                             }
                             if (line->redirect_error != NULL) { // >& (el ultimo mandato solo podrá tener redirección de salida y de error)
-                                fd = creat(line->redirect_output, 0666); //creamos el fichero
+                                fd = creat(line->redirect_error, 0666); //creamos el fichero
                                 if (fd!=-1) {                                   // permisos del mode 0666: R y W para user group y other
                                     dup2(fd,2); //redirigimos el error
                                     close(fd); //cerramos el fd

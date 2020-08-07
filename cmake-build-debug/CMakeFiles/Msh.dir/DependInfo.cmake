@@ -4,7 +4,7 @@ set(CMAKE_DEPENDS_LANGUAGES
   )
 # The set of files for implicit dependencies of each language:
 set(CMAKE_DEPENDS_CHECK_C
-  "/home/rackumi/CLionProjects/Minishell/mshell.c" "/home/rackumi/CLionProjects/Minishell/cmake-build-debug/CMakeFiles/Msh.dir/mshell.c.o"
+  "/home/rackumi/CLionProjects/Minishell2.0/mshell.c" "/home/rackumi/CLionProjects/Minishell2.0/cmake-build-debug/CMakeFiles/Msh.dir/mshell.c.o"
   )
 set(CMAKE_C_COMPILER_ID "GNU")
 
