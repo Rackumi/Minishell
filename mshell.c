@@ -30,11 +30,22 @@ int aux;
 
 /* XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX */
 
+/* XXXXXXXXXXXXXXXXXXXX Declaracion de funciones XXXXXXXXXXXXXXXXXXXX */
+
 void prtPrompt(){ //funcion que muestra por pantalla el prompt
     printf("msh> ");
 }
 
 void mandatos(tline * line){
+    if(line->background){
+        signal(SIGQUIT, SIG_IGN); //captura las señales sigquit y sigint y las ignora
+        signal(SIGINT, SIG_IGN);
+    }
+    else{
+        signal(SIGQUIT, SIG_DFL); //captura las señales sigquit y sigint y actua de forma default
+        signal(SIGINT, SIG_DFL);
+    }
+
     if (line->ncommands == 0) {
         //cuando la linea de entrada esta vacia
         //simplemente avanza sin hacer nada y acaba poniendo el prompt de nuevo a la espera de un nuevo mandato
@@ -60,7 +71,9 @@ void mandatos(tline * line){
         }
     }
     else if ((strcmp(line->commands[0].argv[0], "jobs") == 0) && (line->ncommands == 1)) { //si la linea de comando tiene el mandato jobs
-        printf("jobs\n");
+        printf("[1]+ Stopped                        noseke\n");
+        printf("[1]+ Done                           noseke\n");
+        printf("[1]+ Running                        noseke\n");
     }
     else if ((strcmp(line->commands[0].argv[0], "fg") == 0) && (line->ncommands == 1)) { //si la linea de comando tiene el mandato fg
         printf("fg\n");
@@ -72,10 +85,6 @@ void mandatos(tline * line){
                 exit(-1);
 
             case 0:  // Proceso Hijo (pid = 0)
-
-                signal(SIGQUIT, SIG_DFL);
-                signal(SIGINT, SIG_DFL);
-
                 if (line->redirect_input != NULL) { // <
                     fd = open(line->redirect_input, O_RDONLY); //abrimos el fichero
                     if (fd != -1) {
@@ -260,7 +269,6 @@ int main(void) { //funcion main donde se ejecutara tod0 el programa y se escribi
         lineG = tokenize(buffer); //tokenize del buffer (funcion proporcinada por el enunciado)
 
         if(lineG->background){ //cuando se ejecuta en background
-            printf("[1] %d\n",pid);
             switch (pid = fork()) {
                 case -1: // Error fork (pid = -1)
                     fprintf(stderr, "Falló el fork().\n%s\n", strerror(errno));
@@ -271,12 +279,17 @@ int main(void) { //funcion main donde se ejecutara tod0 el programa y se escribi
                     break;
 
                 default: // Proceso Padre. (pid > 0) -> ejecuta el prompt
+                    printf("[1] %d\n",getpid());
                     prtPrompt(); //llama a la funcion que imprime el prompt
                     break;
             }
         }
         else { //cuando se ejecuta en foreground
             mandatos(lineG); //llama a la funcion que realiza los mandatos
+
+            signal(SIGQUIT, SIG_IGN); //captura las señales sigquit y sigint y las ignora
+            signal(SIGINT, SIG_IGN);
+
             prtPrompt(); //llama a la funcion que imprime el prompt
         }
     }
@@ -285,3 +298,5 @@ int main(void) { //funcion main donde se ejecutara tod0 el programa y se escribi
 
     return 0;
 }
+
+/* XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX */
