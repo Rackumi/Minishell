@@ -16,17 +16,20 @@
 
 char buffer[1024]; //buffer
 tline * lineG; //tipo dato que representa los datos extraidos de la linea de comandos
-int i,j; //variables de iteración
+int i,j,k,l; //variables de iteración
 int status;
 char *dir;
 char cwd[1024];
 int fd; //variable file descriptor
 
-pid_t pid; //pid                         (pid_t es como un int)
+pid_t pid; //pid (pid_t es como un int)
 pid_t *pidArray; //array de pids
 int **pipeArray; //array de pipes
 
 int aux;
+
+int mandatosBg;
+char ***procesosBg;
 
 /* XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX */
 
@@ -37,6 +40,8 @@ void prtPrompt(){ //funcion que muestra por pantalla el prompt
 }
 
 void mandatos(tline * line){
+
+    /* captura de señales */
     if(line->background){
         signal(SIGQUIT, SIG_IGN); //captura las señales sigquit y sigint y las ignora
         signal(SIGINT, SIG_IGN);
@@ -45,6 +50,7 @@ void mandatos(tline * line){
         signal(SIGQUIT, SIG_DFL); //captura las señales sigquit y sigint y actua de forma default
         signal(SIGINT, SIG_DFL);
     }
+    /* fin de captura de señales */
 
     if (line->ncommands == 0) {
         //cuando la linea de entrada esta vacia
@@ -71,9 +77,10 @@ void mandatos(tline * line){
         }
     }
     else if ((strcmp(line->commands[0].argv[0], "jobs") == 0) && (line->ncommands == 1)) { //si la linea de comando tiene el mandato jobs
-        printf("[1]+ Stopped                        noseke\n");
-        printf("[1]+ Done                           noseke\n");
-        printf("[1]+ Running                        noseke\n");
+        for(k=0; k<mandatosBg; k++){
+            printf("[%d]+ Running                        noseke\n",mandatosBg);
+        }
+//        printf("[1]+ Done                           noseke\n");
     }
     else if ((strcmp(line->commands[0].argv[0], "fg") == 0) && (line->ncommands == 1)) { //si la linea de comando tiene el mandato fg
         printf("fg\n");
@@ -195,8 +202,7 @@ void mandatos(tline * line){
                                 exit(-1);
                             }
                         }
-                        if (line->redirect_error !=
-                            NULL) { // >& (el ultimo mandato solo podrá tener redirección de salida y de error)
+                        if (line->redirect_error != NULL) { // >& (el ultimo mandato solo podrá tener redirección de salida y de error)
                             fd = creat(line->redirect_error, 0666); //creamos el fichero
                             if (fd !=
                                 -1) {                                   // permisos del mode 0666: R y W para user group y other
@@ -260,12 +266,14 @@ int main(void) { //funcion main donde se ejecutara tod0 el programa y se escribi
 
     /* XXXXXXXXXXXXXXXXXXXXXX PROGRAMA PRINCIPAL XXXXXXXXXXXXXXXXXXXXXXXX */
 
+    prtPrompt(); //llama a la funcion que imprime el prompt
+
     signal(SIGQUIT, SIG_IGN); //captura las señales sigquit y sigint y las ignora
     signal(SIGINT, SIG_IGN);
 
-    prtPrompt(); //llama a la funcion que imprime el prompt
-
+    mandatosBg = 0; //la inicializamos a 0 porque todavia no hay ningun mandato en bg
     while (fgets(buffer,1024,stdin)){ //bucle del programa
+
         lineG = tokenize(buffer); //tokenize del buffer (funcion proporcinada por el enunciado)
 
         if(lineG->background){ //cuando se ejecuta en background
@@ -279,17 +287,23 @@ int main(void) { //funcion main donde se ejecutara tod0 el programa y se escribi
                     break;
 
                 default: // Proceso Padre. (pid > 0) -> ejecuta el prompt
-                    printf("[1] %d\n",getpid());
+                    mandatosBg++;
+                    printf("[%d] %d\n",mandatosBg, pid);
+
+//                    for(k=0; k<lineG->ncommands; k++){
+//                        for(l=0; l<lineG->commands[k].argc; l++) {
+//                            procesosBg[mandatosBg][k][l] = lineG->commands[k].argv[l];
+//                            printf("%s ", lineG->commands[k].argv[l]);
+//                        }
+//                    }
+
                     prtPrompt(); //llama a la funcion que imprime el prompt
                     break;
             }
+            mandatosBg--;
         }
         else { //cuando se ejecuta en foreground
             mandatos(lineG); //llama a la funcion que realiza los mandatos
-
-            signal(SIGQUIT, SIG_IGN); //captura las señales sigquit y sigint y las ignora
-            signal(SIGINT, SIG_IGN);
-
             prtPrompt(); //llama a la funcion que imprime el prompt
         }
     }
