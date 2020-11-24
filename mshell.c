@@ -26,9 +26,11 @@ pid_t pid; //pid (pid_t es como un int)
 pid_t *pidArray; //array de pids
 int **pipeArray; //array de pipes
 
+int MAX = 100;
 int aux;
 
-int** bgList;
+int bgCount = 0;
+tline** bgList;
 
 /* XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX */
 
@@ -36,6 +38,21 @@ int** bgList;
 
 void prtPrompt(){ //funcion que muestra por pantalla el prompt
     printf("msh> ");
+}
+
+void prtMandatoArg(tline * line1){
+    for(i=0; i<line1->ncommands; i++) {
+        for (j = 0; j < line1->commands[i].argc; j++) {
+            printf("%s ", line1->commands[i].argv[j]);
+        }
+        if(i!=line1->ncommands-1) {
+            printf("| ");
+        }
+    }
+    if(line1->background){
+        printf("&");
+    }
+    printf("\n");
 }
 
 void mandatos(tline * line){
@@ -76,10 +93,14 @@ void mandatos(tline * line){
         }
     }
     else if ((strcmp(line->commands[0].argv[0], "jobs") == 0) && (line->ncommands == 1)) { //si la linea de comando tiene el mandato jobs
-        for(k=0; k<1; k++){
-            printf("[%d]+ Running                        noseke\n",1);
-        }
-//        printf("[1]+ Done                           noseke\n");
+        prtMandatoArg(bgList[0]);
+//        if(bgCount != 0){
+//            for(k=0; k<MAX; k++){
+//                if(bgList[bgCount] != ((void *)0)){
+//                    printf("[%d]+ Running               ", bgCount);
+//                }
+//            }
+//        }
     }
     else if ((strcmp(line->commands[0].argv[0], "fg") == 0) && (line->ncommands == 1)) { //si la linea de comando tiene el mandato fg
         printf("fg\n");
@@ -282,11 +303,16 @@ int main(void) { //funcion main donde se ejecutara tod0 el programa y se escribi
 
                 case 0: // Proceso Hijo (pid = 0) -> ejecuta los mandatos en background
                     mandatos(lineG); //llama a la funcion que realiza los mandatos
+//                    bgCount--;
                     break;
 
                 default: // Proceso Padre. (pid > 0) -> ejecuta el prompt
-//                    bgList[]
-                    printf("[%d] %d\n",1, pid);
+                    bgList = (tline **)calloc(MAX, sizeof(tline));
+                    bgList[bgCount] = lineG;
+//                    prtMandatoArg(bgList[0]);
+                    bgCount++;
+                    printf("[%d] %d\n",bgCount, pid);
+
                     prtPrompt(); //llama a la funcion que imprime el prompt
             }
         }
