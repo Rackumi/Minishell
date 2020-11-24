@@ -28,8 +28,7 @@ int **pipeArray; //array de pipes
 
 int aux;
 
-int mandatosBg;
-char ***procesosBg;
+int** bgList;
 
 /* XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX */
 
@@ -77,8 +76,8 @@ void mandatos(tline * line){
         }
     }
     else if ((strcmp(line->commands[0].argv[0], "jobs") == 0) && (line->ncommands == 1)) { //si la linea de comando tiene el mandato jobs
-        for(k=0; k<mandatosBg; k++){
-            printf("[%d]+ Running                        noseke\n",mandatosBg);
+        for(k=0; k<1; k++){
+            printf("[%d]+ Running                        noseke\n",1);
         }
 //        printf("[1]+ Done                           noseke\n");
     }
@@ -271,12 +270,11 @@ int main(void) { //funcion main donde se ejecutara tod0 el programa y se escribi
     signal(SIGQUIT, SIG_IGN); //captura las señales sigquit y sigint y las ignora
     signal(SIGINT, SIG_IGN);
 
-    mandatosBg = 0; //la inicializamos a 0 porque todavia no hay ningun mandato en bg
     while (fgets(buffer,1024,stdin)){ //bucle del programa
 
         lineG = tokenize(buffer); //tokenize del buffer (funcion proporcinada por el enunciado)
 
-        if(lineG->background){ //cuando se ejecuta en background
+        if(lineG->background==1){ //cuando se ejecuta en background
             switch (pid = fork()) {
                 case -1: // Error fork (pid = -1)
                     fprintf(stderr, "Falló el fork().\n%s\n", strerror(errno));
@@ -287,22 +285,12 @@ int main(void) { //funcion main donde se ejecutara tod0 el programa y se escribi
                     break;
 
                 default: // Proceso Padre. (pid > 0) -> ejecuta el prompt
-                    mandatosBg++;
-                    printf("[%d] %d\n",mandatosBg, pid);
-
-//                    for(k=0; k<lineG->ncommands; k++){
-//                        for(l=0; l<lineG->commands[k].argc; l++) {
-//                            procesosBg[mandatosBg][k][l] = lineG->commands[k].argv[l];
-//                            printf("%s ", lineG->commands[k].argv[l]);
-//                        }
-//                    }
-
+//                    bgList[]
+                    printf("[%d] %d\n",1, pid);
                     prtPrompt(); //llama a la funcion que imprime el prompt
-                    break;
             }
-            mandatosBg--;
         }
-        else { //cuando se ejecuta en foreground
+        else if(lineG->background==0){ //cuando se ejecuta en foreground
             mandatos(lineG); //llama a la funcion que realiza los mandatos
             prtPrompt(); //llama a la funcion que imprime el prompt
         }
