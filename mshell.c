@@ -309,8 +309,8 @@ int main(void) { //funcion main donde se ejecutara tod0 el programa y se escribi
                 default: // Proceso Padre. (pid > 0) -> ejecuta el prompt
                     bgList = (tline **)calloc(MAX, sizeof(tline));
                     bgList[bgCount] = lineG;
-//                    prtMandatoArg(bgList[0]);
-                    bgCount++;
+                    prtMandatoArg(bgList[0]);
+//                    bgCount++;
                     printf("[%d] %d\n",bgCount, pid);
 
                     prtPrompt(); //llama a la funcion que imprime el prompt
