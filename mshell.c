@@ -17,6 +17,7 @@
 char buffer[1024]; //buffer
 tline * lineG; //tipo dato que representa los datos extraidos de la linea de comandos
 int i,j,k; //variables de iteración
+int ffgg;
 int status;
 char *dir;
 char cwd[1024];
@@ -31,10 +32,8 @@ int aux;
 
 int bgCount = 0;
 tline** bgList;
-int* bgIndices;
+int* bgAcabados;
 int* bgMostrado;
-
-char* str;
 
 /* XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX */
 
@@ -63,17 +62,6 @@ void prtMandatoArg(tline * lineAux) {
 
 void mandatos(tline * line){
 
-    /* captura de señales */
-    if(line->background){
-        signal(SIGQUIT, SIG_IGN); //captura las señales sigquit y sigint y las ignora
-        signal(SIGINT, SIG_IGN);
-    }
-    else{
-        signal(SIGQUIT, SIG_DFL); //captura las señales sigquit y sigint y actua de forma default
-        signal(SIGINT, SIG_DFL);
-    }
-    /* fin de captura de señales */
-
     if (line->ncommands == 0) {
         //cuando la linea de entrada esta vacia
         //simplemente avanza sin hacer nada y acaba poniendo el prompt de nuevo a la espera de un nuevo mandato
@@ -99,87 +87,32 @@ void mandatos(tline * line){
         }
     }
     else if ((strcmp(line->commands[0].argv[0], "jobs") == 0) && (line->ncommands == 1)) { //si la linea de comando tiene el mandato jobs
-//        prtMandatoArg(bgList[1]);
-        if(bgCount > 0) {
-            if(bgCount == 1){
-                if (bgIndices[k] == 1) {
-                    printf("[%d]+ Done       ", 1);
-                    prtMandatoArg(bgList[1]);
+        for(k=1; k<=bgCount; k++){
+            if(bgList[k] != 0 && bgMostrado[k] == 0){
+                if(bgAcabados[k] == 1){
+                    printf("[%d] Done       ", k);
+                    prtMandatoArg(bgList[k]);
                     bgMostrado[k] = 1; // ya ha sido mostrado
                 }
                 else{
-                    printf("[%d]+ Running       ", 1);
-                    prtMandatoArg(bgList[1]);
-                }
-            }
-            else if(bgCount == 2){
-                for(k=1; k<=2; k++){
-                    if(k==2) {
-                        if (bgIndices[k] == k) {
-                            printf("[%d]+ Done       ", k);
-                            prtMandatoArg(bgList[k]);
-                            bgMostrado[k] = 1; // ya ha sido mostrado
-                        } else {
-                            printf("[%d]+ Running       ", k);
-                            prtMandatoArg(bgList[k]);
-                        }
-                    }
-                    else{
-                        if (bgIndices[k] == k) {
-                            printf("[%d]- Done       ", k);
-                            prtMandatoArg(bgList[k]);
-                            bgMostrado[k] = 1; // ya ha sido mostrado
-                        }
-                        else{
-                            printf("[%d]- Running       ", k);
-                            prtMandatoArg(bgList[k]);
-                        }
-                    }
-
-                }
-            }
-            else{
-                for(k=1; k<=bgCount; k++) {
-                    if (k == bgCount) { //ultimo es de +
-                        if (bgIndices[k] == k) {
-                            printf("[%d]+ Done       ", k);
-                            prtMandatoArg(bgList[k]);
-                            bgMostrado[k] = 1; // ya ha sido mostrado
-                        } else {
-                            printf("[%d]+ Running       ", k);
-                            prtMandatoArg(bgList[k]);
-                        }
-                    } else if(k == bgCount-1){ //penultimo el de -
-                        if (bgIndices[k] == k) {
-                            printf("[%d]- Done       ", k);
-                            prtMandatoArg(bgList[k]);
-                            bgMostrado[k] = 1; // ya ha sido mostrado
-                        } else {
-                            printf("[%d]- Running       ", k);
-                            prtMandatoArg(bgList[k]);
-                        }
-                    }
-                    else{ //cualquier otro caso
-                        if (bgIndices[k] == k) {
-                            printf("[%d] Done       ", k);
-                            prtMandatoArg(bgList[1]);
-                            bgMostrado[k] = 1; // ya ha sido mostrado
-                        } else {
-                            printf("[%d] Running       ", k);
-                            prtMandatoArg(bgList[k]);
-                        }
-                    }
+                    printf("[%d] Running    ", k);
+                    prtMandatoArg(bgList[k]);
                 }
             }
         }
     }
     else if ((strcmp(line->commands[0].argv[0], "fg") == 0) && (line->ncommands == 1)) { //si la linea de comando tiene el mandato fg
-        if(line->commands->argc == 1){ //sin numero, cogemos el +
+        if(line->commands->argc == 1){ //sin numero, cogemos el +(el ultimo)
             mandatos(bgList[bgCount]);
         }
         else { //numero del jobs
-            strcpy(str, line->commands->argv[2]);
-//            mandatos(bgList[(int)(str)]);
+//            ffgg= atoi(line->commands->argv[1]); me da error el atoi
+            if(ffgg == 0 && ffgg > bgCount){ //TODO si no es un numero
+                printf("fg: %d: no existe ese trabajo", ffgg);
+            }
+            else{
+                mandatos(bgList[ffgg]);
+            }
         }
     }
     else if (line->ncommands == 1) { //si es solo 1 mandato
@@ -189,6 +122,8 @@ void mandatos(tline * line){
                 exit(-1);
 
             case 0:  // Proceso Hijo (pid = 0)
+                signal(SIGQUIT, SIG_DFL); //captura las señales sigquit y sigint y actua de forma default
+                signal(SIGINT, SIG_DFL);
                 if (line->redirect_input != NULL) { // <
                     fd = open(line->redirect_input, O_RDONLY); //abrimos el fichero
                     if (fd != -1) {
@@ -256,6 +191,8 @@ void mandatos(tline * line){
                     exit(1);
 
                 case 0:   // Proceso Hijo (pid = 0)
+                    signal(SIGQUIT, SIG_DFL); //captura las señales sigquit y sigint y actua de forma default
+                    signal(SIGINT, SIG_DFL);
                     if (i == 0) { //primer mandato
                         for (j = 1;
                              j < line->ncommands - 1; j++) { //cierras todos los pipes que no vayas a utilizar
@@ -363,22 +300,20 @@ int main(void) { //funcion main donde se ejecutara tod0 el programa y se escribi
 
     /* XXXXXXXXXXXXXXXXXXXXXX PROGRAMA PRINCIPAL XXXXXXXXXXXXXXXXXXXXXXXX */
 
-    prtPrompt(); //llama a la funcion que imprime el prompt
-
     signal(SIGQUIT, SIG_IGN); //captura las señales sigquit y sigint y las ignora
     signal(SIGINT, SIG_IGN);
 
+    prtPrompt(); //llama a la funcion que imprime el prompt
+
     bgList = calloc(MAX, sizeof(tline)); //inicializacion del array de mandatos
-    bgIndices = calloc(MAX, sizeof(int)); //inicializacion del array de indices de mandatos
+    bgAcabados = calloc(MAX, sizeof(int)); //inicializacion del array de indices de mandatos
     bgMostrado = calloc(MAX, sizeof(int)); //inicializacion del array de mandatos ya mostrados
 
-    while (fgets(buffer,1024,stdin)){ //bucle del programa
+    while (fgets(buffer, 1024, stdin)){ //bucle del programa
 
         lineG = tokenize(buffer); //tokenize del buffer (funcion proporcinada por el enunciado)
 
         if(lineG->background==1){ //cuando se ejecuta en background
-            signal(SIGQUIT, SIG_IGN); //captura las señales sigquit y sigint y las ignora
-            signal(SIGINT, SIG_IGN);
             switch (pid = fork()) {
                 case -1: // Error fork (pid = -1)
                     fprintf(stderr, "Falló el fork().\n%s\n", strerror(errno));
@@ -386,36 +321,34 @@ int main(void) { //funcion main donde se ejecutara tod0 el programa y se escribi
 
                 case 0: // Proceso Hijo (pid = 0) -> ejecuta los mandatos en background
                     mandatos(lineG); //llama a la funcion que realiza los mandatos
-                    break;
+                    bgAcabados[bgCount] = 1; //ya ha acabado el proceso
+                    exit(0);
 
                 default: // Proceso Padre. (pid > 0) -> ejecuta el prompt
                     bgCount++;
                     printf("[%d] %d\n",bgCount, pid); //imprime el pid
                     bgList[bgCount] = lineG; //introduce el mandatos en el array de mandatos
 //                    prtMandatoArg(bgList[1]);
-                    prtPrompt(); //llama a la funcion que imprime el prompt
                     break;
             }
-            if(pid == 0){
-                bgIndices[bgCount] = 1; //ya ha acabado el proceso
-            }
-//            prtMandatoArg(lineG);
         }
         else{ //cuando se ejecuta en foreground
             mandatos(lineG); //llama a la funcion que realiza los mandatos
             signal(SIGQUIT, SIG_IGN); //captura las señales sigquit y sigint y las ignora
             signal(SIGINT, SIG_IGN);
 //            prtMandatoArg(bgList[1]);
-            prtPrompt(); //llama a la funcion que imprime el prompt
+        }
 
-            for(k=1; k<=bgCount; k++){ //muestra los mandatos ya acabados
-                if(bgIndices[k] == 1 && bgList[k] != 0) {
-                    printf("[%d] Done       ", k);
-                    prtMandatoArg(bgList[k]);
-                    bgMostrado[k] = 1; // ya ha sido mostrado
-                }
+        for(k=1; k<=bgCount; k++){ //muestra los mandatos ya acabados
+            if(bgAcabados[k] == 1 && bgList[k] != 0 && bgMostrado[k] == 0) {
+                printf("[%d] Done       ", k);
+                prtMandatoArg(bgList[k]);
+                bgMostrado[k] = 1; // ya ha sido mostrado
             }
         }
+
+        prtPrompt(); //llama a la funcion que imprime el prompt
+
     }
 
     /* XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX */
