@@ -16,6 +16,7 @@
 
 char buffer[1024]; //buffer
 tline * lineG; //tipo dato que representa los datos extraidos de la linea de comandos
+tline * lineFG;
 int i,j,k; //variables de iteración
 int ffgg;
 int status;
@@ -30,14 +31,16 @@ int **pipeArray; //array de pipes
 int MAX = 100;
 int aux;
 
-int bgCount = 0;
+int bgCount = 0; //indice de los arras abajo mecionados (lleva la cuenta de los mandatos en bg)
 
-char** bgList;
-int* bgAcabados;
-int* bgMostrado;
+char** bgList; //array con los mandatos en formato string
+int* bgAcabados; //array de mandatos ya acabados (1 si acabado)
+int* bgMostrado; //array de mandatos ya mostrados (1 si mostrado)
 
-char str[1024];
-char strAux[1024];
+char str[1024]; //string para concatenar
+char strAux[1024]; //string auxiliar para concatenar
+
+char* fgAux; //variable auxiliar para utiliar atoi
 
 /* XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX */
 
@@ -71,6 +74,7 @@ char* returnMandatoArg(tline * lineAux) {
 
 void manejador(){
     waitpid(pid,&status,__WNOTHREAD);
+    bgAcabados[bgCount] = 1; //ya ha acabado el proceso
 }
 
 void mandatos(tline * line){
@@ -115,17 +119,28 @@ void mandatos(tline * line){
         }
     }
     else if ((strcmp(line->commands[0].argv[0], "fg") == 0) && (line->ncommands == 1)) { //si la linea de comando tiene el mandato fg
-        if(line->commands->argc == 1){ //sin numero, cogemos el +(el ultimo)
-//            mandatos(bgList[bgCount]);
+        if(bgCount != 0) {
+            if (line->commands->argc == 1) { //sin numero, cogemos el +(el ultimo)
+                lineFG = tokenize(bgList[bgCount]);
+                if (bgAcabados[bgCount] == 0) {
+                    mandatos(lineFG);
+                }
+            } else { //numero del jobs
+                strcpy(fgAux, line->commands->argv[1]);
+                ffgg = (int) strtol(fgAux, NULL, 0);//TODO si no es un numero
+                if (ffgg == 0 && ffgg > bgCount) {
+                    printf("fg: %d: no existe ese trabajo\n", ffgg);
+                } else {
+                    if (bgAcabados[ffgg] == 0) {
+                        lineFG = tokenize(bgList[ffgg]);
+                        mandatos(lineFG);
+                    }
+
+                }
+            }
         }
-        else { //numero del jobs
-//            ffgg= atoi(line->commands->argv[1]); me da error el atoi
-            if(ffgg == 0 && ffgg > bgCount){ //TODO si no es un numero
-                printf("fg: %d: no existe ese trabajo", ffgg);
-            }
-            else{
-//                mandatos(bgList[ffgg]);
-            }
+        else{
+            printf("fg: actual: no existe ese trabajo\n");
         }
     }
     else if (line->ncommands == 1) { //si es solo 1 mandato
@@ -324,12 +339,10 @@ int main(void) { //funcion main donde se ejecutara tod0 el programa y se escribi
 
     while (fgets(buffer, 1024, stdin)){ //bucle del programa
 
-        signal(SIGCHLD, manejador);
-
-//      bgAcabados[bgCount] = 1; //ya ha acabado el proceso
+        signal(SIGCHLD, manejador); //manejador de los procesos hijos
 
         for(k=1; k<=bgCount; k++){ //muestra los mandatos ya acabados
-            if(bgAcabados[k] == 1 && bgList[k] != 0 && bgMostrado[k] == 0) { //
+            if(bgAcabados[k] == 1 && bgList[k] != 0 && bgMostrado[k] == 0){
                 printf("[%d] Done       ", k);
                 printf("%s", bgList[k]);
                 bgMostrado[k] = 1; // ya ha sido mostrado
@@ -352,7 +365,7 @@ int main(void) { //funcion main donde se ejecutara tod0 el programa y se escribi
                 default: // Proceso Padre. (pid > 0) -> ejecuta el prompt
                     bgCount++;
                     printf("[%d] %d\n",bgCount, pid); //imprime el pid
-                    bgList[bgCount] = strdup(returnMandatoArg(lineG));
+                    bgList[bgCount] = strdup(returnMandatoArg(lineG)); //guarda en el array el mandato (en forma de string)
                     break;
             }
         }
