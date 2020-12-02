@@ -69,6 +69,10 @@ char* returnMandatoArg(tline * lineAux) {
     return str;
 }
 
+void manejador(){
+    waitpid(pid,&status,__WNOTHREAD);
+}
+
 void mandatos(tline * line){
 
     if (line->ncommands == 0) {
@@ -320,8 +324,12 @@ int main(void) { //funcion main donde se ejecutara tod0 el programa y se escribi
 
     while (fgets(buffer, 1024, stdin)){ //bucle del programa
 
+        signal(SIGCHLD, manejador);
+
+//      bgAcabados[bgCount] = 1; //ya ha acabado el proceso
+
         for(k=1; k<=bgCount; k++){ //muestra los mandatos ya acabados
-            if( bgList[k] != 0 && bgMostrado[k] == 0) { //bgAcabados[k] == 1 &&
+            if(bgAcabados[k] == 1 && bgList[k] != 0 && bgMostrado[k] == 0) { //
                 printf("[%d] Done       ", k);
                 printf("%s", bgList[k]);
                 bgMostrado[k] = 1; // ya ha sido mostrado
@@ -339,7 +347,6 @@ int main(void) { //funcion main donde se ejecutara tod0 el programa y se escribi
 
                 case 0: // Proceso Hijo (pid = 0) -> ejecuta los mandatos en background
                     mandatos(lineG); //llama a la funcion que realiza los mandatos
-                    bgAcabados[bgCount] = 1; //ya ha acabado el proceso
                     exit(0);
 
                 default: // Proceso Padre. (pid > 0) -> ejecuta el prompt
