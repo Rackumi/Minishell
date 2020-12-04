@@ -40,7 +40,7 @@ int* bgMostrado; //array de mandatos ya mostrados (1 si mostrado)
 char str[1024]; //string para concatenar
 char strAux[1024]; //string auxiliar para concatenar
 
-char* fgAux; //variable auxiliar para utiliar atoi
+char fgAux[1024]; //variable auxiliar para utiliar atoi
 
 /* XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX */
 
@@ -119,28 +119,30 @@ void mandatos(tline * line){
         }
     }
     else if ((strcmp(line->commands[0].argv[0], "fg") == 0) && (line->ncommands == 1)) { //si la linea de comando tiene el mandato fg
-        if(bgCount != 0) {
-            if (line->commands->argc == 1) { //sin numero, cogemos el +(el ultimo)
+        if(bgCount > 0) {
+            if ((line->commands[0].argc) == 1) { //sin numero, cogemos el +(el ultimo)
                 lineFG = tokenize(bgList[bgCount]);
                 if (bgAcabados[bgCount] == 0) {
                     mandatos(lineFG);
+                    bgMostrado[bgCount] = 1;
                 }
             } else { //numero del jobs
                 strcpy(fgAux, line->commands->argv[1]);
-                ffgg = (int) strtol(fgAux, NULL, 0);//TODO si no es un numero
-                if (ffgg == 0 && ffgg > bgCount) {
+                ffgg = atoi(fgAux);//TODO si no es un numero
+                if (ffgg == 0 || ffgg > bgCount) {
                     printf("fg: %d: no existe ese trabajo\n", ffgg);
                 } else {
                     if (bgAcabados[ffgg] == 0) {
                         lineFG = tokenize(bgList[ffgg]);
                         mandatos(lineFG);
-                    }
+                        bgMostrado[bgCount] = 1;
+                   }
 
                 }
             }
         }
         else{
-            printf("fg: actual: no existe ese trabajo\n");
+            printf("fg: actual: no existen trabajos\n");
         }
     }
     else if (line->ncommands == 1) { //si es solo 1 mandato
