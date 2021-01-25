@@ -128,7 +128,7 @@ void mandatos(tline * line){
                 }
             } else { //numero del jobs
                 strcpy(fgAux, line->commands->argv[1]);
-                ffgg = atoi(fgAux);//TODO si no es un numero
+                ffgg = atoi(fgAux);//si no es un numero
                 if (ffgg == 0 || ffgg > bgCount) {
                     printf("fg: %d: no existe ese trabajo\n", ffgg);
                 } else {
